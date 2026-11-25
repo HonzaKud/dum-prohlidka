@@ -1,0 +1,1 @@
+Statický Three.js prohlížeč domu pro GitHub Pages. npm run dev, npm test, npm run build. Publikace z docs/main, base relativní. Model je v public/assets/house.glb. Neupravovat nebo publikovat původní snímek pozemku ani osobní podklady. Před push zkopírovat ověřený dist do docs, zkontrolovat mobilní ovládání a desktop. Stav a ověření viz README.md.

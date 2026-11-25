@@ -1,0 +1,4 @@
+* text=auto
+docs/assets/*.js -whitespace linguist-generated=true
+docs/assets/*.css linguist-generated=true
+*.glb binary
