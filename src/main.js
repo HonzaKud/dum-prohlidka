@@ -103,7 +103,7 @@ if (renderer) {
     syncUI(controls.state);
     document.documentElement.dataset.modelReady = 'true';
   }, (event) => {
-    $('loading-status').textContent = event.total ? 'Načítání domu · ' + Math.round(event.loaded / event.total * 100) + ' %' : 'Načítání domu…';
+    $('loading-status').textContent = event.total ? 'Načítání domu · ' + Math.min(100, Math.round(event.loaded / event.total * 100)) + ' %' : 'Načítání domu…';
   }, () => showError('Model se nepodařilo načíst. Zkontroluj připojení a obnov stránku.'));
   function frame(time) {
     const dt = previous ? Math.min((time - previous) / 1000, .08) : 0;
