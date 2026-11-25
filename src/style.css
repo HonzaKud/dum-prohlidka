@@ -9,3 +9,5 @@
 @media(max-width:360px){.masthead{left:13px;right:13px}.identity p{font-size:.75rem}.identity-mark{display:none}.mode-button{min-width:87px;padding:11px 9px}.study-note span{display:block;margin:1px 0 0}.joystick-base{width:100px;height:100px;left:18px;bottom:145px}.touch-look{bottom:130px}.fly-controls{bottom:151px;right:18px;gap:7px}}
 @media(max-height:500px) and (orientation:landscape){.masthead{top:12px;left:18px;right:18px}.identity p{display:none}.identity-mark{width:33px;height:33px}.icon-button{width:38px;height:38px}.bottom-ui{bottom:10px;gap:6px}.mode-button{min-height:40px;min-width:93px;padding:8px 12px}.navigation{flex-direction:row}.joystick-base{width:95px;height:95px;bottom:70px;left:28px}.touch-look{top:65px;bottom:75px}.touch-look-hint{bottom:6px}.fly-controls{bottom:91px;right:28px}.help-panel{top:60px;max-height:calc(100dvh - 80px);overflow:auto}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important}.loading-symbol{animation-duration:2.5s}}
+
+body[data-mode="fly"] .touch-look-hint{bottom:110px}

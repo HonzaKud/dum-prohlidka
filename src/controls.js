@@ -7,14 +7,14 @@ export class HouseControls {
   this.camera=camera;this.domElement=domElement;this.onStateChange=options.onStateChange??(()=>{});
   this.mode='orbit';this.error=null;this.disposed=false;
   this.touch=Boolean(window.matchMedia?.('(pointer: coarse)').matches||navigator.maxTouchPoints>0||window.innerWidth<=760);
-  this.keys=new Set();this.stick={id:null,x:0,y:0};this.lookPointer=null;this.verticalPointers=new Map();this.cleanups=[];
+  this.keys=new Set();this.stick={id:null,x:0,y:0};this.lookPointer=null;this.mouseDrag=null;this.verticalPointers=new Map();this.cleanups=[];
   this.euler=new THREE.Euler(0,0,0,'YXZ');this.delta=new THREE.Vector3();
   this.orbit=new OrbitControls(camera,domElement);
   Object.assign(this.orbit,{enableDamping:true,dampingFactor:.08,minDistance:3,maxDistance:110,maxPolarAngle:Math.PI/2-.02});
   this.orbit.target.set(0,2,0);
   if(domElement.tabIndex<0)domElement.tabIndex=0;
   this.listen(document,'pointerlockchange',()=>{this.clear();this.emit();});
-  this.listen(document,'pointerlockerror',()=>{this.error='Prohlížeč nepovolil ovládání myší. Zkus znovu tlačítko pro spuštění.';this.emit();});
+  this.listen(document,'pointerlockerror',()=>{this.error='Myš nelze zachytit. Klikni na model a použij WASD; rozhlížej se tažením s pravým tlačítkem.';this.emit();});
   this.listen(window,'blur',()=>this.clear());
   this.listen(document,'visibilitychange',()=>{if(document.hidden)this.clear();});
   this.listen(document,'keydown',event=>{
@@ -24,6 +24,17 @@ export class HouseControls {
   this.listen(document,'keyup',event=>{this.keys.delete(event.code);if(this.acceptsKeys()&&KEYS.has(event.code))event.preventDefault();});
   this.listen(document,'mousemove',event=>{if(this.mode!=='orbit'&&this.locked)this.look(event.movementX*.0022,event.movementY*.0022);});
   this.listen(domElement,'contextmenu',event=>event.preventDefault());
+  this.listen(domElement,'pointerdown',event=>{
+   if(this.mode==='orbit'||this.locked||event.button!==2)return;
+   domElement.focus({preventScroll:true});domElement.setPointerCapture(event.pointerId);
+   this.mouseDrag={id:event.pointerId,x:event.clientX,y:event.clientY};event.preventDefault();
+  });
+  this.listen(domElement,'pointermove',event=>{
+   const p=this.mouseDrag;if(!p||p.id!==event.pointerId||this.locked)return;
+   this.look((event.clientX-p.x)*.004,(event.clientY-p.y)*.004);p.x=event.clientX;p.y=event.clientY;
+  });
+  for(const name of ['pointerup','pointercancel','lostpointercapture'])
+   this.listen(domElement,name,event=>{if(this.mouseDrag?.id===event.pointerId)this.mouseDrag=null;});
   this.setupTouch();this.reset();
  }
  get locked(){return document.pointerLockElement===this.domElement;}
@@ -33,10 +44,10 @@ export class HouseControls {
  acceptsKeys(){
   if(this.mode==='orbit'||this.disposed)return false;
   if(document.activeElement?.matches?.('input, textarea, select, [contenteditable="true"]'))return false;
-  return this.locked||(this.touch&&document.activeElement===this.domElement);
+  return this.locked||document.activeElement===this.domElement;
  }
  clear(){
-  this.keys.clear();this.stick.id=null;this.stick.x=this.stick.y=0;this.lookPointer=null;this.verticalPointers.clear();
+  this.keys.clear();this.stick.id=null;this.stick.x=this.stick.y=0;this.lookPointer=null;this.mouseDrag=null;this.verticalPointers.clear();
   if(this.knob)this.knob.style.transform='translate(-50%, -50%)';
  }
  async enter(){
@@ -45,7 +56,7 @@ export class HouseControls {
   if(!this.touch)try{
    if(!this.domElement.requestPointerLock)throw new Error('Pointer lock unavailable');
    await this.domElement.requestPointerLock();
-  }catch{this.error='Ovládání myší se nepodařilo zapnout. Klikni znovu na tlačítko pro spuštění.';}
+  }catch{this.error='Myš nelze zachytit. Klikni na model a použij WASD; rozhlížej se tažením s pravým tlačítkem.';}
   this.emit();
  }
  setMode(mode){
@@ -57,7 +68,7 @@ export class HouseControls {
   this.clear();this.error=null;this.camera.up.set(0,1,0);
   if(this.mode==='orbit'){
    const bounds=this.domElement.getBoundingClientRect(),aspect=Math.max(.25,bounds.width/Math.max(1,bounds.height)),scale=Math.max(1,.9/aspect);
-   this.camera.position.set(20*scale,14*scale,27*scale);this.orbit.target.set(0,2,0);
+   this.camera.position.set(15*scale,10*scale,21*scale);this.orbit.target.set(0,2,0);
    const damping=this.orbit.enableDamping;this.orbit.enableDamping=false;this.orbit.update();this.orbit.enableDamping=damping;
   }else{
    this.camera.position.set(...(this.mode==='walk'?[14,1.7,19]:[18,10,24]));

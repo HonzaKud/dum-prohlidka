@@ -21,10 +21,10 @@ try {
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, coarse ? 1.5 : 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.15;
+  renderer.toneMappingExposure = 1.0;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.autoUpdate = false;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.type = THREE.PCFShadowMap;
   renderer.domElement.setAttribute('aria-label', 'Trojrozměrná studie domu. Ovládání je dostupné v nápovědě.');
   renderer.domElement.tabIndex = 0;
   container.appendChild(renderer.domElement);
@@ -32,8 +32,8 @@ try {
   showError('3D zobrazení se nepodařilo spustit. Zkus aktuální prohlížeč se zapnutou hardwarovou akcelerací.');
 }
 if (renderer) {
-  scene.add(new THREE.HemisphereLight(0xf3f6f0, 0x67735d, 2.8));
-  const sun = new THREE.DirectionalLight(0xffefcf, 3.4);
+  scene.add(new THREE.HemisphereLight(0xf3f6f0, 0x67735d, 1.6));
+  const sun = new THREE.DirectionalLight(0xffefcf, 2.2);
   sun.position.set(-18, 32, 24);
   sun.castShadow = true;
   sun.shadow.mapSize.set(coarse ? 1024 : 2048, coarse ? 1024 : 2048);
@@ -54,7 +54,7 @@ if (renderer) {
   scene.add(path);
   function syncUI(state) {
     document.body.dataset.mode = state.mode;
-    for (const button of document.querySelectorAll('[data-mode]')) button.setAttribute('aria-pressed', String(button.dataset.mode === state.mode));
+    for (const button of document.querySelectorAll('button[data-mode]')) button.setAttribute('aria-pressed', String(button.dataset.mode === state.mode));
     $('touch-controls').hidden = !coarse || state.mode === 'orbit';
     $('fly-up').hidden = state.mode !== 'fly';
     $('fly-down').hidden = state.mode !== 'fly';
@@ -65,7 +65,7 @@ if (renderer) {
   }
   controls = new HouseControls(camera, renderer.domElement, { onStateChange: syncUI });
   controls.setMode('orbit');
-  for (const button of document.querySelectorAll('[data-mode]')) {
+  for (const button of document.querySelectorAll('button[data-mode]')) {
     button.addEventListener('click', () => {
       controls.setMode(button.dataset.mode);
       $('help-panel').hidden = true;
@@ -78,11 +78,14 @@ if (renderer) {
     $('help-panel').hidden = !$('help-panel').hidden;
     $('help-button').setAttribute('aria-expanded', String(!$('help-panel').hidden));
   });
+  let lastAspect = null;
   function resize() {
     const { width, height } = container.getBoundingClientRect();
     renderer.setSize(width, height);
     camera.aspect = width / Math.max(height, 1);
     camera.updateProjectionMatrix();
+    if (controls.state.mode === "orbit" && (lastAspect === null || (lastAspect < 1) !== (camera.aspect < 1))) controls.reset();
+    lastAspect = camera.aspect;
   }
   new ResizeObserver(resize).observe(container);
   resize();
