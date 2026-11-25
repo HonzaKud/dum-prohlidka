@@ -22,10 +22,10 @@ export class HouseControls {
    else if(this.acceptsKeys()&&KEYS.has(event.code)){event.preventDefault();this.keys.add(event.code);}
   });
   this.listen(document,'keyup',event=>{this.keys.delete(event.code);if(this.acceptsKeys()&&KEYS.has(event.code))event.preventDefault();});
-  this.listen(document,'mousemove',event=>{if(this.mode!=='orbit'&&this.locked)this.look(event.movementX*.0022,event.movementY*.0022);});
+  this.listen(document,'mousemove',event=>{if(!this.suspended&&this.mode!=='orbit'&&this.locked)this.look(event.movementX*.0022,event.movementY*.0022);});
   this.listen(domElement,'contextmenu',event=>event.preventDefault());
   this.listen(domElement,'pointerdown',event=>{
-   if(this.mode==='orbit'||this.locked||event.button!==2)return;
+   if(this.suspended||this.mode==='orbit'||this.locked||event.button!==2)return;
    domElement.focus({preventScroll:true});domElement.setPointerCapture(event.pointerId);
    this.mouseDrag={id:event.pointerId,x:event.clientX,y:event.clientY};event.preventDefault();
   });
@@ -37,12 +37,13 @@ export class HouseControls {
    this.listen(domElement,name,event=>{if(this.mouseDrag?.id===event.pointerId)this.mouseDrag=null;});
   this.setupTouch();this.reset();
  }
+ setSuspended(value){this.suspended=value;this.clear();this.orbit.enabled=!value&&this.mode==='orbit';if(value&&this.locked)document.exitPointerLock();}
  get locked(){return document.pointerLockElement===this.domElement;}
  get state(){return {mode:this.mode,locked:this.locked,touch:this.touch,error:this.error};}
  emit(){this.onStateChange(this.state);}
  listen(target,name,callback,options){if(!target)return;target.addEventListener(name,callback,options);this.cleanups.push(()=>target.removeEventListener(name,callback,options));}
  acceptsKeys(){
-  if(this.mode==='orbit'||this.disposed)return false;
+  if(this.mode==='orbit'||this.disposed||this.suspended)return false;
   if(document.activeElement?.matches?.('input, textarea, select, [contenteditable="true"]'))return false;
   return this.locked||document.activeElement===this.domElement;
  }
@@ -51,7 +52,7 @@ export class HouseControls {
   if(this.knob)this.knob.style.transform='translate(-50%, -50%)';
  }
  async enter(){
-  if(this.mode==='orbit'||this.disposed)return;
+  if(this.mode==='orbit'||this.disposed||this.suspended)return;
   this.error=null;this.domElement.focus({preventScroll:true});
   if(!this.touch)try{
    if(!this.domElement.requestPointerLock)throw new Error('Pointer lock unavailable');
@@ -81,7 +82,7 @@ export class HouseControls {
  look(dx,dy){this.yaw-=dx;this.pitch=THREE.MathUtils.clamp(this.pitch-dy,-Math.PI/2+.03,Math.PI/2-.03);this.applyLook();}
  setupTouch(){
   this.joystick=document.getElementById('joystick-base');this.knob=document.getElementById('joystick-knob');
-  const lookArea=document.getElementById('touch-look'),usable=()=>this.mode!=='orbit'&&!this.disposed;
+  const lookArea=document.getElementById('touch-look'),usable=()=>this.mode!=='orbit'&&!this.disposed&&!this.suspended;
   const updateStick=event=>{
    if(event.pointerId!==this.stick.id)return;
    const b=this.joystick.getBoundingClientRect(),radius=Math.max(1,Math.min(b.width,b.height)*.38);
@@ -121,7 +122,7 @@ export class HouseControls {
   }
  }
  update(seconds){
-  if(this.disposed)return;
+  if(this.disposed||this.suspended)return;
   if(this.mode==='orbit'){this.orbit.update();return;}
   const dt=THREE.MathUtils.clamp(Number.isFinite(seconds)?seconds:0,0,.1),has=(...codes)=>codes.some(code=>this.keys.has(code));
   let f=Number(has('KeyW','ArrowUp'))-Number(has('KeyS','ArrowDown'))-this.stick.y;

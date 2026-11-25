@@ -22,4 +22,17 @@ Sestavení používá relativní cesty pro GitHub Pages. Publikovaný obsah je v
 Knihovny Three.js (MIT) a Vite (MIT). Vykreslování probíhá v prohlížeči, bez serverového backendu a API klíčů.
 
 ## Ověření
-GLB kontrola geometrie a načtení přes GLTFLoader prošly. Ovládání prověřeno staticky a scénářem rychlosti pohybu, normalizace a výšky očí. V Edge ověřeno načtení, režimy, klávesnice a virtuální ovladače ve viewportu 390 × 844 a 320 × 640. Fyzický telefon ani VR zatím netestovány.
+GLB kontrola geometrie a načtení přes GLTFLoader prošly. Ovládání prověřeno staticky a scénářem rychlosti pohybu, normalizace a výšky očí. V Edge ověřeno načtení, režimy, klávesnice a virtuální ovladače ve viewportu 390 × 844 a 320 × 640. Fyzický telefon ani headset zatím netestovány.
+
+## Quest 2 / WebXR
+
+Otevři veřejný web v prohlížeči Meta Questu a stiskni tlačítko VR vpravo nahoře. Po povolení se spustí prostorový režim immersive-vr.
+
+- Levá páčka: chůze podle směru pohledu (1,4 m/s).
+- Pravá páčka: otáčení po 30 stupních, další krok po vrácení páčky do středu.
+- A nebo X: návrat před dům.
+- Spoušť při pohybu: zrychlení.
+- Systémová nabídka headsetu: návrat z VR.
+Používá se skutečná sledovaná výška očí a měřítko v metrech. Zatím bez kolizí a teleportování.
+Při ukončení VR se obnoví běžný pohled. Na počítači bez VR se po kliknutí objeví vysvětlení, ostatní režimy fungují dál.
+Ověřeno: automatické scénáře WebXR lifecycle a výpočtů pohybu, build, desktop a mobilní rozložení. Skutečné stereo, výkon a ovladače na fyzickém Questu 2 zatím neověřeny.

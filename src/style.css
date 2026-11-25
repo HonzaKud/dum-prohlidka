@@ -11,3 +11,10 @@
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important}.loading-symbol{animation-duration:2.5s}}
 
 body[data-mode="fly"] .touch-look-hint{bottom:110px}
+
+.vr-button{width:52px;font-size:.875rem;font-weight:750;letter-spacing:.04em}
+.vr-button:not(:disabled){background:var(--ink);color:#fffdf4}
+.vr-button:disabled{opacity:.5;cursor:wait}
+.vr-status{position:absolute;z-index:10;top:90px;right:24px;max-width:min(350px,calc(100% - 32px));padding:18px 21px;border-radius:18px;font-size:.875rem;line-height:1.6}
+.is-vr .masthead,.is-vr .bottom-ui,.is-vr .touch-controls,.is-vr .help-panel,.is-vr .vr-status{display:none!important}
+.help-panel{max-height:calc(100dvh - 110px);overflow:auto}

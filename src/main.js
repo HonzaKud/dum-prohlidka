@@ -2,11 +2,12 @@ import './style.css';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { HouseControls } from './controls.js';
+import { HouseVR } from './vr.js';
 const $ = (id) => document.getElementById(id);
 const container = $('scene-container');
 const helpContent = $('help-panel').innerHTML;
 const coarse = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0 || window.innerWidth <= 760;
-let renderer, controls, modelLoaded = false, animation = 0, previous = 0;
+let renderer, controls, vr, modelLoaded = false, previous = 0;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#e6ece7');
 scene.fog = new THREE.Fog('#e6ece7', 55, 140);
@@ -65,21 +66,30 @@ if (renderer) {
   }
   controls = new HouseControls(camera, renderer.domElement, { onStateChange: syncUI });
   controls.setMode('orbit');
+  vr = new HouseVR(renderer,scene,camera,controls,{button:$('vr-button'),onChange:({active,message})=>{
+    document.body.classList.toggle('is-vr',active);
+    $('vr-status').textContent=message;
+    $('vr-status').hidden=!message;
+    previous=0;
+  }});
   for (const button of document.querySelectorAll('button[data-mode]')) {
     button.addEventListener('click', () => {
+      $('vr-status').hidden=true;
       controls.setMode(button.dataset.mode);
       $('help-panel').hidden = true;
       renderer.domElement.focus({ preventScroll: true });
     });
   }
-  $('home-button').addEventListener('click', () => controls.reset());
+  $('home-button').addEventListener('click', () => {$('vr-status').hidden=true;controls.reset();});
   $('enter-button').addEventListener('click', () => controls.enter());
   $('help-button').addEventListener('click', () => {
+    $('vr-status').hidden=true;
     $('help-panel').hidden = !$('help-panel').hidden;
     $('help-button').setAttribute('aria-expanded', String(!$('help-panel').hidden));
   });
   let lastAspect = null;
   function resize() {
+    if(renderer.xr.isPresenting)return;
     const { width, height } = container.getBoundingClientRect();
     renderer.setSize(width, height);
     camera.aspect = width / Math.max(height, 1);
@@ -99,24 +109,22 @@ if (renderer) {
     scene.add(gltf.scene);
     renderer.shadowMap.needsUpdate = true;
     modelLoaded = true;
+    vr.setReady();
     $('loading').hidden = true;
     syncUI(controls.state);
     document.documentElement.dataset.modelReady = 'true';
   }, (event) => {
     $('loading-status').textContent = event.total ? 'Načítání domu · ' + Math.min(100, Math.round(event.loaded / event.total * 100)) + ' %' : 'Načítání domu…';
   }, () => showError('Model se nepodařilo načíst. Zkontroluj připojení a obnov stránku.'));
-  function frame(time) {
-    const dt = previous ? Math.min((time - previous) / 1000, .08) : 0;
-    previous = time;
-    controls.update(dt);
-    renderer.render(scene, camera);
-    animation = requestAnimationFrame(frame);
+  function frame(time,xrFrame) {
+    if(document.hidden&&!renderer.xr.isPresenting){previous=0;return;}
+    const dt=previous?Math.min((time-previous)/1000,.05):0;
+    previous=time;
+    if(renderer.xr.isPresenting)vr.update(dt,xrFrame);
+    else controls.update(dt);
+    renderer.render(scene,camera);
   }
-  document.addEventListener('visibilitychange', () => {
-    cancelAnimationFrame(animation); previous = 0;
-    if (!document.hidden) animation = requestAnimationFrame(frame);
-  });
-  animation = requestAnimationFrame(frame);
-  window.addEventListener('pagehide', () => cancelAnimationFrame(animation), { once: true });
-  window.addEventListener('pageshow', (event) => { if (event.persisted) { previous = 0; animation = requestAnimationFrame(frame); } });
+  renderer.setAnimationLoop(frame);
+  window.addEventListener('pagehide',()=>renderer.setAnimationLoop(null));
+  window.addEventListener('pageshow',()=>{previous=0;renderer.setAnimationLoop(frame);});
 }
